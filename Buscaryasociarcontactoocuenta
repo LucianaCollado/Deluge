@@ -1,0 +1,68 @@
+Consulta = zoho.crm.getRecordById("Consultas",idConsulta);
+emailContacto = Consulta.get("Email");
+/////////// Búsqueda del registro //////////////
+contact = zoho.crm.searchRecords("Contacts","(Email:equals:" + emailContacto + ")");
+account = zoho.crm.searchRecords("Accounts","(Correo_electr_nico:equals:" + emailContacto + ")");
+if(contact.size() > 0 || account.size() > 0)
+{
+	if(contact.size() > 0)
+	{
+		info " El contacto ya existe";
+		idContact = contact.get(0).get("id");
+		info idContact;
+		///////// Actualizar campos relacionados /////////////
+		update = zoho.crm.updateRecord("Consultas",idConsulta,{"Nombre_contacto":idContact});
+		info update;
+		info zoho.crm.getRecordById("Consultas",idConsulta).get("Nombre_contacto");
+	}
+	else
+	{
+		info " La cuenta ya existe";
+		idAccount = account.get(0).get("id");
+		info idAccount;
+		///////// Actualizar campos relacionados /////////////
+		update2 = zoho.crm.updateRecord("Consultas",idConsulta,{"Cuenta_empresa":idAccount});
+		info update2;
+		info zoho.crm.getRecordById("Consultas",idConsulta).get("Cuenta_empresa");
+		nombreEmpresa = zoho.crm.getRecordById("Consultas",idConsulta).get("Cuenta_empresa").get("name");
+		update3 = zoho.crm.updateRecord("Consultas",idConsulta,{"Empresa":nombreEmpresa});
+		info zoho.crm.getRecordById("Consultas",idConsulta).get("Empresa");
+	}
+}
+else
+{
+	//// SINO CREAR CONTACTO Y ASOCIARLO ////
+	nombre = Consulta.get("Nombre");
+	apellido = Consulta.get("Apellido");
+	tel = Consulta.get("Tel_fono");
+	emp = Consulta.get("Empresa");
+	cargo = Consulta.get("Cargo");
+	prov = Consulta.get("Provincia");
+	datos = Map();
+	datos.put("Last_Name",apellido);
+	datos.put("First_Name",nombre);
+	datos.put("Email",emailContacto);
+	if(!tel.isNull())
+	{
+		datos.put("Phone",tel);
+	}
+	if(!emp.isNull())
+	{
+		datos.put("Description",emp);
+	}
+	if(!cargo.isNull())
+	{
+		datos.put("Cargo",cargo);
+	}
+	if(!prov.isNull())
+	{
+		datos.put("Mailing_State",prov);
+	}
+	info "No hay un contacto asociado";
+	crearContacto = zoho.crm.createRecord("Contacts",datos);
+	info crearContacto;
+	idContact = crearContacto.get("id");
+	info idContact;
+	update = zoho.crm.updateRecord("Consultas",idConsulta,{"Nombre_contacto":idContact});
+	info update;
+}
