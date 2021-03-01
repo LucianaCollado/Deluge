@@ -1,0 +1,75 @@
+//Creación de módulo personalizado donde caen consultas desde un formulario. A través de esta función se convierten las consultas en contacto y tratos (relacionados)
+
+Form = zoho.crm.getRecordById("Formularios",idForm);
+correo = Form.get("Email");
+tipoOp = Form.get("Tipo_de_consulta");
+tipoContactoForm = Form.get("Tipo_de_contacto");
+movilForm = Form.get("M_vil");
+nombreForm = Form.get("Nombre");
+apellidoForm = Form.get("Apellido");
+consulta = Form.get("Consulta");
+nombrePac = Form.get("Nombre_paciente");
+apellidoPac = Form.get("Apellido_paciente");
+nombreTrato = tipoOp + " - " + tipoContactoForm + " " + nombreForm + " " + apellidoForm;
+info nombreTrato;
+//CREAR O BUSCAR CONTACTO
+buscarContacto = zoho.crm.searchRecords("Contacts","(Email:equals:" + correo + ")");
+info buscarContacto;
+if(buscarContacto.size() > 0)
+{
+	info "el contacto existe";
+	contactid = buscarContacto.get(0).get("id");
+	tipoContacto = buscarContacto.get(0).get("Tipo_de_contacto");
+	movil = buscarContacto.get(0).get("Mobile");
+	if(tipoContacto != tipoContactoForm)
+	{
+		update = zoho.crm.updateRecord("Contacts",contactid,{"Tipo_de_contacto":tipoContactoForm});
+	}
+	if(tipoContacto == "Familiar responsable")
+	{
+		update = zoho.crm.updateRecord("Contacts",contactid,{"Nombre_paciente":nombrePac,"Apellido_paciente":apellidoPac});
+	}
+	if(movil != movilForm)
+	{
+		update = zoho.crm.updateRecord("Contacts",contactid,{"Mobile":movilForm});
+	}
+}
+else
+{
+	fuente = Form.get("Name");
+	obrasoc = Form.get("Obra_social");
+	info "no existe el contacto";
+	if(tipoContactoForm == "Familiar responsable")
+	{
+		crearContacto = zoho.crm.createRecord("Contacts",{"First_Name":nombreForm,"Last_Name":apellidoForm,"Tipo_de_contacto":tipoContactoForm,"Email":correo,"Mobile":movilForm,"Lead_Source":fuente,"Obra_social1":obrasoc,"Tipo_de_tratamiento":tipoOp,"Nombre_paciente":nombrePac,"Apellido_paciente":apellidoPac});
+		contactid = crearContacto.get("id");
+		info crearContacto;
+	}
+	else
+	{
+		crearContacto = zoho.crm.createRecord("Contacts",{"First_Name":nombreForm,"Last_Name":apellidoForm,"Tipo_de_contacto":tipoContactoForm,"Email":correo,"Mobile":movilForm,"Lead_Source":fuente,"Obra_social1":obrasoc,"Tipo_de_tratamiento":tipoOp});
+		contactid = crearContacto.get("id");
+		info crearContacto;
+	}
+}
+//BUSCAR OBRA SOCIAL
+obraSoc = Form.get("Obra_social");
+buscarObraSoc = zoho.crm.searchRecords("Accounts","(Account_Name:equals:" + obraSoc + ")");
+if(buscarObraSoc.size() > 0)
+{
+	idObra = buscarObraSoc.get(0).get("id");
+	update = zoho.crm.updateRecord("Formularios",idForm,{"Obra_social_relacionada":idObra});
+	update2 = zoho.crm.updateRecord("Contacts",contactid,{"Obra_social":idObra});
+	info update;
+}
+Form = zoho.crm.getRecordById("Formularios",idForm);
+// CREACION DEL TRATO
+if(tipoOp == "Tto. ambulatorio")
+{
+	crearTrato = zoho.crm.createRecord("Deals",{"Contact_Name":contactid,"Pipeline":"B2C","Stage":"Oportunidad","Tipo_de_oportunidad":"B2C Ambulatorios","Deal_Name":nombreTrato,"Description":consulta},{"trigger":{"workflow"}});
+	info crearTrato;
+}
+else
+{
+	crearTrato = zoho.crm.createRecord("Deals",{"Contact_Name":contactid,"Pipeline":"B2C","Stage":"Oportunidad","Tipo_de_oportunidad":"B2C Internación","Deal_Name":nombreTrato,"Description":consulta},{"trigger":{"workflow"}});
+}
