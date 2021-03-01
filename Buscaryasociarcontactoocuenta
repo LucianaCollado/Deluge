@@ -1,3 +1,4 @@
+//Función para buscar contacto y cuenta a partir del mail y asociarlo a una consulta
 Consulta = zoho.crm.getRecordById("Consultas",idConsulta);
 emailContacto = Consulta.get("Email");
 /////////// Búsqueda del registro //////////////
