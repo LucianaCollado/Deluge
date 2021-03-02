@@ -1,0 +1,41 @@
+//Función en lenguaje deluge para averiguar si una cuenta esta conveniada o no a partir de un trato. En el caso de que sí, se crea un evento donde se asocia al contacto y al trato del cual sale la información.
+
+trato = zoho.crm.getRecordById({"Deals"},id_trato);
+info trato;
+
+//crear fecha
+hora = trato.get("Created_Time");
+info hora;
+vencimiento = hora.addDay(3);
+info vencimiento;
+mes = vencimiento.getMonth();
+if(mes < 10)
+{
+	mes = "0" + mes;
+}
+info mes;
+dia = vencimiento.getDay();
+info dia;
+anio = vencimiento.getYear();
+info anio;
+fechavencimiento = anio + "-" + mes + "-" + dia;
+info fechavencimiento;
+
+//Saber si el trato tiene convenio o no
+nombretrato = trato.get("Deal_Name");
+info nombretrato;
+tratocontacto = trato.get("Contact_Name").get("id");
+info tratocontacto;
+id_cuenta = trato.get("Account_Name").get("id");
+cuenta = zoho.crm.getRecordById("Accounts",id_cuenta);
+convenio = cuenta.get("Con_convenio");
+
+//CREAR TAREA
+if(convenio == false)
+{
+	crear_tarea = zoho.crm.createRecord("Tasks",{"Subject":"Llamada de confirmacion contacto institucional","$se_module":"Deals","Who_Id":{"id":tratocontacto},"What_Id":{"id":id_trato},"Due_Date":fechavencimiento,"Description":"• Presentación Personal •	Chequear y Cargar datos faltantes •	Confirmar o modificar datos del Contacto Institucional (es la persona que tiene poder de decisión de cerrar convenio)"});
+	info crear_tarea;
+	id_tarea = crear_tarea.get("id");
+	tarea = zoho.crm.getRecordById("Tasks",id_tarea);
+	info tarea;
+}
